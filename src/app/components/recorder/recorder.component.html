@@ -1,0 +1,94 @@
+<div class="container mx-auto px-4 py-8">
+  <div class="max-w-2xl mx-auto">
+    <div class="bg-white rounded-lg shadow-md p-6">
+      <h2 class="text-2xl font-bold mb-6">Voice Recorder</h2>
+      
+      <!-- Chunk Duration Setting -->
+      <div class="mb-6">
+        <label class="block text-sm font-medium text-gray-700 mb-2">
+          Chunk Duration (seconds):
+        </label>
+        <input 
+          type="number" 
+          [ngModel]="chunkDuration()"
+          (ngModelChange)="chunkDuration.set($event)"
+          [disabled]="isRecording()"
+          min="5"
+          max="30"
+          class="w-full p-2 border rounded focus:ring-blue-500 focus:border-blue-500"
+        >
+      </div>
+      
+      <!-- Recording Controls -->
+      <div class="flex justify-center space-x-4 mb-6">
+        <button 
+          (click)="startRecording()" 
+          [disabled]="isRecording()"
+          class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded disabled:opacity-50">
+          Start Recording
+        </button>
+        
+        <button 
+          (click)="stopRecording()" 
+          [disabled]="!isRecording()"
+          class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded disabled:opacity-50">
+          Stop Recording
+        </button>
+      </div>
+
+      <!-- Recording Status -->
+      @if (isRecording()) {
+        <div class="text-center text-sm text-gray-600 mb-4">
+          Recording in progress... Chunks uploaded: {{uploadedChunks()}}
+        </div>
+      }
+
+      <!-- Merge Control -->
+      <div class="mb-6">
+        <button 
+          (click)="mergeAudio()" 
+          [disabled]="!canMerge()"
+          class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded disabled:opacity-50 mb-2">
+          Merge Audio
+        </button>
+        @if (uploadedChunks() < 4) {
+          <p class="text-sm text-gray-600 text-center">
+            Record at least 4 chunks to enable merging ({{uploadedChunks()}}/4)
+          </p>
+        }
+      </div>
+
+      <!-- Merge Status -->
+      @if (mergeStatus() === 'merging') {
+        <div class="text-center text-sm text-blue-600 mb-4">
+          Merging audio chunks...
+        </div>
+      } @else if (mergeStatus() === 'success') {
+        <div class="text-center text-sm text-green-600 mb-4">
+          Audio merged successfully!
+        </div>
+      } @else if (mergeStatus() === 'error') {
+        <div class="text-center text-sm text-red-600 mb-4">
+          Failed to merge audio. Please try again.
+        </div>
+      }
+
+      <!-- Audio Playback -->
+      @if (audioState().url) {
+        <div class="space-y-4">
+          <button 
+            (click)="togglePlayback()"
+            class="w-full bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-2 px-4 rounded">
+            {{ audioState().isPlaying ? 'Pause' : 'Play' }} Audio
+          </button>
+          
+          <button 
+            (click)="deleteAudio()"
+            class="w-full bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded">
+            Delete Audio
+          </button>
+        </div>
+      }
+    </div>
+  </div>
+</div>
