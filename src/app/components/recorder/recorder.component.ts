@@ -38,7 +38,10 @@ export class RecorderComponent implements OnDestroy {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       this.mediaRecorder = new MediaRecorder(stream);
       this.isRecording.set(true);
-      this.uploadedChunks.set(0);
+
+      if (this.uploadedChunks() === 0) {
+        this.audioService.resetSession();
+      }
 
       this.mediaRecorder.ondataavailable = (event) => {
         if (event.data.size > 0) {
@@ -46,7 +49,11 @@ export class RecorderComponent implements OnDestroy {
         }
       };
 
-      // Start recording with user-defined chunk duration
+      this.mediaRecorder.onstop = () => {
+        // Request final chunk
+        this.mediaRecorder?.requestData();
+      };
+
       this.mediaRecorder.start(this.chunkDuration() * 1000);
     } catch (error) {
       console.error('Error accessing microphone:', error);
@@ -55,7 +62,7 @@ export class RecorderComponent implements OnDestroy {
   }
 
   stopRecording() {
-    if (this.mediaRecorder) {
+    if (this.mediaRecorder && this.mediaRecorder.state !== 'inactive') {
       this.mediaRecorder.stop();
       this.isRecording.set(false);
       this.mediaRecorder.stream.getTracks().forEach(track => track.stop());
@@ -91,13 +98,12 @@ export class RecorderComponent implements OnDestroy {
 
   fetchAudio() {
     this.audioService.getAudio().subscribe({
-      next: (blob) => {
-        const url = URL.createObjectURL(blob);
+      next: (url) => {
         const currentUrl = this.audioState().url;
-        if (currentUrl) {
-          URL.revokeObjectURL(currentUrl);
-        }
         this.audioState.set({ url: url, isPlaying: false });
+        if (this.audioPlayer) {
+          this.audioPlayer.src = url;
+        }
       },
       error: (error) => {
         console.error('Error fetching audio:', error);
